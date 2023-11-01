@@ -10,7 +10,6 @@ pyi_splash.close()
 
 #%% - Backend 
 import os
-from tqdm import tqdm
 import datetime
 import subprocess
 
@@ -34,12 +33,12 @@ def compare_directories(reference_dirs, target_dirs, return_lost_file_list=False
 
     for dir1 in reference_dirs:
         gen1 = file_generator(dir1)
-        for file1 in tqdm(gen1, desc=f"Scanning files in {dir1}", unit="files", leave=True):
+        for file1 in gen1:
             set1.add(file1)
 
     for dir2 in target_dirs:
         gen2 = file_generator(dir2)
-        for file2 in tqdm(gen2, desc=f"Scanning files in {dir2}", unit="files", leave=True):
+        for file2 in gen2:
             set2.add(file2)
 
     files_scanned_in_dir1 = len(set1)
@@ -84,10 +83,10 @@ def compare_directories(reference_dirs, target_dirs, return_lost_file_list=False
             f.write(f"Number of perfect matches: {perfect_matches}\n")
 
             # Write number of files in refrence dirs (dir1) that are not in target dirs (dir2)
-            f.write(f"Files in reference not in target: {files_only_in_dir1} which is {percent_matched_dir1}%\n")
+            f.write(f"Files in reference not in target: {files_only_in_dir1}\n")
 
             # Write number of files in target dirs (dir2) that are not in refrence dirs (dir1)
-            f.write(f"Files in target not in reference: {files_only_in_dir2} which is {percent_matched_dir2}%\n\n\n")
+            f.write(f"Files in target not in reference: {files_only_in_dir2}\n\n\n")
 
 
             # Write list of the file names of the files that are only in dir1
@@ -178,11 +177,11 @@ class MainWindow(QMainWindow):
             self.list2.takeItem(self.list2.row(item))
 
     def edit_folder(self):
-        print("Edit Folder1")
-
+        #print("Edit Folder1")
+        pass
     def edit_folder2(self):
-        print("Edit Folder2")
-
+        #print("Edit Folder2")
+        pass
     def run_backupinspector(self):
         reference_dirs = self.selected_directories1
         target_dirs = self.selected_directories2

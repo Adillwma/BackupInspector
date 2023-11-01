@@ -31,7 +31,7 @@ BackupInspector is primarily developed for Windows users, and we provide a pre-p
 ### Windows
 To install BackupInspector on Windows, follow these steps:
 
-1. Download the latest release of BackupInspector here: [BackupInspector Download](https://drive.google.com/file/d/1uTolk4qEOtARLhcJpGRvSeB6ji6Jhip3/view?usp=sharing)
+1. Download the latest release of BackupInspector here: [BackupInspector Download](https://drive.google.com/file/d/1IxTAYibN7lDByVkbiVVRHUhVlAX30Kwe/view?usp=sharing)
 
 2. Run the downloaded BackupInspector_v1.exe file.
 
@@ -50,11 +50,14 @@ For users on operating systems other than Windows, you can run BackupInspector b
 
 3. Click the "Run BackupInspector" button to start the process. The comparison may take a few minutes depending on the number of files and folders. On completion a .txt file will be genrated and oppened that contains the report of how many files are missing from the traget folders and a list of the filenames. The .txt file is stored in your temp files directory, if you wish to retain a copy of the report please 'save as' the notepad file while it is open.
 
-4. Missing files can be copied manually or all at once by pressing the "Copy All Missing Files" button. This will copy all the missing files from the reference folders to the target folders in thier correct locations. It is recomended to rerun BackupInspector after copying the missing files to ensure that all files have been copied correctly.
+4. Missing files can be copied manually or all at once by pressing the "Copy All Missing Files" button. This will copy all the missing files from the reference folders to the target folders in thier correct locations. It is recomended to re-run BackupInspector after copying the missing files to ensure that all files have been copied correctly.
 
 <div align="center">
 
-<img src="Images/Gui.png" width="700"> 
+<img src="Images/Gui.png" height="600"> 
+
+*The current BackupInspector user interface, v1.0.0.*
+
 </div>
 
 # License
