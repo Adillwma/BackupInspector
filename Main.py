@@ -4,12 +4,7 @@ from PyQt6.QtWidgets import QFileDialog, QListWidgetItem, QApplication, QMainWin
 from PyQt6.QtGui import QPixmap
 import shutil
 
-import pyi_splash
 
-# Close the splash screen. It does not matter when the call
-# to this function is made, the splash screen remains open until
-# this function is called or the Python program is terminated.
-pyi_splash.close()
 
 #%% - Backend 
 import os
