@@ -16,7 +16,7 @@
 </div>
 
 ## Introduction
-BackupInspector is a simple windows program that allows you to verify that your backup has completed and copied all files. BackupInspector checks the reference and target directories, identifying file matches, and presenting a comprehensive report, providing a handy one button to rescue all the uncopied files. This tool was born out of the frustration I experienced with various backup software applications failing to preserve all my files accurately. When used in conjunction with thew great [Cobium Reflector](https://www.cobiansoft.com/cobianbackup.html) and a straightforward batch file to copy the files, BackupInspector has proven to be the most dependable method for backing-up my data and double-checking the success.
+BackupInspector is a simple windows program that allows you to verify that your backup has completed and copied all files. BackupInspector checks the reference and target directories, identifying file matches, and presenting a comprehensive report, providing a handy one button to rescue all the uncopied files. This tool was born out of the frustration I experienced with various backup software applications failing to preserve all my files accurately. 
 
 ## Table of Contents
 - [Installation](#installation)
@@ -54,9 +54,9 @@ For users on operating systems other than Windows, you can run BackupInspector b
 
 <div align="center">
 
-<img src="Images/Gui.png" height="600"> 
+<img src="Images/Guiv2.png" height="600"> 
 
-*The current BackupInspector user interface, v1.0.0.*
+*The current BackupInspector user interface, v2.0.0.*
 
 </div>
 
