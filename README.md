@@ -31,7 +31,7 @@ BackupInspector is primarily developed for Windows users, and we provide a pre-p
 ### Windows
 To install BackupInspector on Windows, follow these steps:
 
-1. Download the latest release of BackupInspector.exe from this repo using the following link: [BackupInspector Download](https://github.com/Adillwma/BackupInspector/raw/main/BackupDetective.exe)
+1. Download the latest release of BackupInspector.exe from this repo using the following link: [BackupInspector Download](https://github.com/Adillwma/BackupInspector/raw/main/BackupInspector.exe)
 
 2. Run the downloaded BackupInspector.exe file.
 
