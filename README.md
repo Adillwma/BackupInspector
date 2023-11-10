@@ -54,7 +54,7 @@ For users on operating systems other than Windows, you can run BackupInspector b
 
 <div align="center">
 
-<img src="Images/Guiv2.png" height="600"> 
+<img src="Images/GuiV2.png" height="600"> 
 
 *The current BackupInspector user interface, v2.0.0.*
 
