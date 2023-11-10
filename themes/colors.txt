@@ -1,0 +1,20 @@
+
+# Dark Theme
+
+Dark: #16191d
+Accent_1: #1f232a
+Accent_2: #2c313c
+Accent_3: #343b47
+Text_1: #fff
+Text_2: #838ea2
+
+###############
+
+# Light Theme
+
+Light Background: #ffffff
+Accent_1: #e4e7ec
+Accent_2: #c5ccd9
+Accent_3: #b2bac8
+Text_1: #16191d
+Text_2: #2c313c

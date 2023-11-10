@@ -3,4 +3,4 @@ private/
 __pycache__/
 Old/
 startup_theme.txt
-.svg
+*.svg
