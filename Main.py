@@ -85,6 +85,7 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.check_preferences()
         self.setWindowTitle("BackupInspector")             # set name for window in taskbar and title bar
+        self.setWindowIcon(QIcon(resource_path(r"Icons\BackupInspectorIcon.png")))   # add icon to window
 
         # Left Menu
         self.left_menu_animation = QPropertyAnimation(self.ui.leftMenuContainer, b"maximumWidth")
@@ -147,9 +148,9 @@ class MainWindow(QMainWindow):
         self.ui.show_report_txt_ProgramBtnType.clicked.connect(self.show_results_txt)
         #self.ui.copy_all_missing_files_button_ProgramBtnType.clicked.connect(self.copy_all_missing_files)
 
-        self.ICON_RED_LED = QPixmap(resource_path(r"PngIcons\led-red-on.png"))
-        self.ICON_BLUE_LED = QPixmap(resource_path(r"PngIcons\blue-led-on.png"))
-        self.ICON_GREEN_LED = QPixmap(resource_path(r"PngIcons\green-led-on.png"))
+        self.ICON_RED_LED = QPixmap(resource_path(r"Icons\LEDs\led-red-on.png"))
+        self.ICON_BLUE_LED = QPixmap(resource_path(r"Icons\LEDs\blue-led-on.png"))
+        self.ICON_GREEN_LED = QPixmap(resource_path(r"Icons\LEDs\green-led-on.png"))
 
         self.tiparrow = QPixmap("Icons/arrowtip.png")
         self.notiparrow = QPixmap()

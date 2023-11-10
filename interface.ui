@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>Icons/logo/BackupInspectorIcon.png</normaloff>Icons/logo/BackupInspectorIcon.png</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">*{
 border: none;
@@ -678,7 +682,7 @@ margin: 0;
                 <string/>
                </property>
                <property name="pixmap">
-                <pixmap>../../Desktop/BLACK HEAD TRANSPARENT .png</pixmap>
+                <pixmap>../../Desktop/BackupInspectorIconR.png</pixmap>
                </property>
                <property name="scaledContents">
                 <bool>true</bool>
