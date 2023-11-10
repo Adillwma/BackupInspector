@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
         self.ui = Form()
         self.ui.setupUi(self)
         self.check_preferences()
-        self.setWindowTitle("BackupDetective")             # set name for window in taskbar and title bar
+        self.setWindowTitle("BackupInspector")             # set name for window in taskbar and title bar
 
         # Left Menu
         self.left_menu_animation = QPropertyAnimation(self.ui.leftMenuContainer, b"maximumWidth")
