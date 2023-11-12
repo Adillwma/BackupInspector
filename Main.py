@@ -11,6 +11,7 @@ import sys
 import os
 import time
 import requests
+import json
 
 
 # Load in the resources file
@@ -219,9 +220,10 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         # Simple Customisation Settings
-        self.online_version_file_link = "https://github.com/Adillwma/BackupInspector/blob/main/version.txt"
+        self.online_version_file_link = "https://github.com/Adillwma/BackupInspector/raw/main/version.json"    # Make sure to use the raw link to the file, (you can swap the blob in the normal link to raw)
         self.update_download_link = "https://github.com/Adillwma/BackupInspector/raw/main/BackupInspector.exe"
 
+        self.config_file = 'config.json'
         self.check_preferences()
 
         self.help_text_path = resource_path(r"copy\help_text.txt")
@@ -384,13 +386,19 @@ class MainWindow(QMainWindow):
         self.ui.notificationCloseBtn_UiBtnType.setIcon(self.icon6b)
 
     def check_preferences(self):
-        # set the default theme to the one saved in the startup_theme.txt file if it exists otherwqise set it to default
-        if os.path.exists("startup_theme.txt"):
-            with open("startup_theme.txt", "r") as file:
-                self.current_theme = file.read()
-                self.ui.themesListSelector.setCurrentText(self.current_theme)     
-        else:
-            self.current_theme = "default"
+        # Load data from the config file
+        with open(self.config_file, 'r') as file:
+            self.config_data = json.load(file)
+
+        # set the version number for checking for updates
+        self.version_number = self.config_data["Version"]
+
+        # set the default theme
+        self.current_theme = self.config_data["Theme"]
+        self.ui.themesListSelector.setCurrentText(self.current_theme) 
+
+        # set the default ui mode
+        #self.current_ui_mode = self.config_data["UI"]
 
     def run_animation(self, animation_item, start, end):
         animation_item.setStartValue(start)
@@ -476,24 +484,24 @@ class MainWindow(QMainWindow):
     def check_online_for_updates(self):
         '''Checks online for updates and displays a notification if there is one'''
 
-        # Get the current version from the version.txt file
-        with open("version.txt", "r") as file:
-            current_version = file.read()
-
-        # Get the latest version from the online version.txt file
-        try:
-            response = requests.get(self.online_version_file_link)
-            latest_version = response.text
-        except:
-            self.ui.popupNotificationText.setText("Unable to check for updates")
+        # Get the latest version from the github repo json file
+        response = requests.get(self.online_version_file_link)    # Send an HTTP GET request to the .JSON URL
+        if response.status_code == 200:   # Verify request was successful (HTTP status code 200)
+            text_content = response.text   # Read the response into a text string
+        else:
+            self.ui.popupNotificationText.setText(f"Unable to check for updates. HTTP status code: {response.status_code}")   # Report HTTP error and code
             self.run_animation(self.notification_animation, start=0, end=100)
             return
         
-        print(f"current_version: {current_version}")
-        print(f"latest_version: {latest_version}")
-        # If the current version is not the same as the latest version then display a notification
-        if current_version != latest_version:
-            self.ui.popupNotificationText.setText("There is a new version available")
+        latest_config_data = json.loads(text_content) # load as json data with 'loads' for string
+        
+        latest_version = latest_config_data["Version"]
+        latest_version_int = int(''.join(latest_version.split('.')))
+
+        current_version_int = int(''.join(self.version_number.split('.')))
+
+        if current_version_int < latest_version_int:
+            self.ui.popupNotificationText.setText(f"New version available: {latest_version}, please download update")
             self.run_animation(self.notification_animation, start=0, end=100)
             self.ui.downloadUpdateBtn_ProgramBtnType.setEnabled(True)   # Enable the update button
 
