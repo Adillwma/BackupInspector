@@ -47,7 +47,7 @@ For users on operating systems other than Windows, you can run BackupInspector b
 1. Open BackupInspector by double-clicking the executable file.
 
 2. Add the reference folder(s) and target folder(s) by clicking the corresponding "Add Folder" button. Refrence folders are the folders that contain the original files, and target folders are the folders that contain the copied files. The backup opperation should be completed before running BackupInspector for it to be able to check the backup.
-
+""
 3. Click the "Run BackupInspector" button to start the process. The comparison may take a few minutes depending on the number of files and folders. On completion a .txt file will be genrated and oppened that contains the report of how many files are missing from the traget folders and a list of the filenames. The .txt file is stored in your temp files directory, if you wish to retain a copy of the report please 'save as' the notepad file while it is open.
 
 4. Missing files can be copied manually or all at once by pressing the "Copy All Missing Files" button. This will copy all the missing files from the reference folders to the target folders in thier correct locations. It is recomended to re-run BackupInspector after copying the missing files to ensure that all files have been copied correctly.
@@ -59,6 +59,8 @@ For users on operating systems other than Windows, you can run BackupInspector b
 *The current BackupInspector user interface, v2.0.0.*
 
 </div>
+
+5. Pressing the settings wheel will bring up the advanced user settings panel which allows further customisation of the matching logic. The default settings are recomended for most users.
 
 # License
 This project is not currently licensed. Please contact for more information.

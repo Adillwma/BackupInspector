@@ -1,56 +1,160 @@
-import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
+from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog, QFileDialog, QListWidgetItem
 from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtCore import QPropertyAnimation, QEasingCurve 
+from PyQt6.QtCore import QPropertyAnimation, QEasingCurve, QThread, pyqtSignal
 from PyQt6 import uic
-import resources_rc
-import os
-
-from PyQt6 import uic
-from PyQt6.QtWidgets import QFileDialog, QListWidgetItem, QApplication, QMainWindow
-from PyQt6.QtGui import QPixmap
+import subprocess
+import datetime
+import filecmp
+import hashlib
 import shutil
+import sys
+import os
+import time
 
 
+# Load in the resources file
+import resources_rc
 
 #%% - Backend 
-import os
-import datetime
-import subprocess
+class BackupInspectorClass:
+    def __init__(self):
+        pass
 
-def file_generator(directory):
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            #yield os.path.join(root, file)  # Yield the full file path
-            yield file  # Yield only the filename
+    def compare_directories(self, refrence_directory, target_directory):
+        comparison = filecmp.dircmp(refrence_directory, target_directory, ignore=None)
 
-def compare_directories(reference_dirs, target_dirs):
-    set1 = set()
-    set2 = set()
-    set_dir1 = set()  # Initialize set for directory paths
-    set_dir2 = set()  # Initialize set for directory paths
+        self.left_only_total += len(comparison.left_only)
+        self.right_only_total += len(comparison.right_only)
+        self.diff_files_total += len(comparison.diff_files)
+        self.same_files_total += len(comparison.same_files)
 
-    for dir1 in reference_dirs:
-        gen1 = file_generator(dir1)
-        for file1 in gen1:
-            set1.add(os.path.basename(file1))  # Add only the filename to set1
-            set_dir1.add(file1)  # Add the full path to set_dir1
+        for filename in comparison.left_only:
+            # check if it is a folder or a file
+            if os.path.isdir(os.path.join(refrence_directory, filename)):
+                # if it is a folder than calulate how many files are in it and in all of its subdirectories and add that to the left only total whilst also adding all the file names to the missing files list. for each folder and subfolder encotered remove one from the left only total as it is not a file
+                self.left_only_total -= 1
+                for root, dirs, files in os.walk(os.path.join(refrence_directory, filename)):
 
-    for dir2 in target_dirs:
-        gen2 = file_generator(dir2)
-        for file2 in gen2:
-            set2.add(os.path.basename(file2))  # Add only the filename to set2
-            set_dir2.add(file2)  # Add the full path to set_dir2
+                    # add the number of files in the directory to the left only total
+                    self.left_only_total += len(files)
+
+                    # add the files in the directory to the missing files list
+                    for file in files:
+                        self.missing_files_list.append(os.path.join(root, file))
+
+            else:
+                # if it is a file then just add it to the missing files list
+                self.missing_files_list.append(os.path.join(refrence_directory, filename))        # must be faster way to tdo this than looping through as it is just taking  alsit to another list and appending constant string to begibg of each entry in list, similarly below
 
 
-    files_scanned_in_dir1 = len(set1)
-    files_scanned_in_dir2 = len(set2)
-    files_only_in_dir1 = len(set1 - set2)
-    files_only_in_dir2 = len(set2 - set1)
-    perfect_matches = len(set1 & set2)
+        for filename in comparison.right_only:
+            if os.path.isdir(os.path.join(target_directory, filename)):                # check if it is a folder or a file
+                self.right_only_total -= 1                                             # remove one from the right only total as it is not a file
 
-    percent_matched_dir1 = (perfect_matches / files_scanned_in_dir2) * 100
-    percent_matched_dir2 = (perfect_matches / files_scanned_in_dir1) * 100
+
+        if self.hash_choice != "None":                                    # PROBABLOY QUICKER TO REMOVE THIS AND JUST DIRECTLY DO HASH CHECK AT HIS POINT RATHER THAN AFTER ALL DIRECTORIES HAVE BEEN COMPARED
+            for filename in comparison.same_files:  
+                self.possible_match_list_refrence.append(os.path.join(refrence_directory,filename))            #append filenames of all same_files_total to possible_match_list for checksum scanning
+                self.possible_match_list_target.append(os.path.join(target_directory,filename))              #append filenames of all same_files_total to possible_match_list for checksum scanning
+
+        # Recursively compare subdirectories
+        for subdirname in comparison.common_dirs:
+            self.compare_directories(os.path.join(refrence_directory, subdirname), os.path.join(target_directory, subdirname))
+
+    def calculate_hash(self, file_path):
+
+        # Initialize MD5 or SHA-1 hash object.
+        if self.hash_choice == "Md5":
+            hash_operator = hashlib.md5()
+        elif self.hash_choice == "Sha-1":
+            hash_operator = hashlib.sha1()
+        elif self.hash_choice == "Sha-256":
+            hash_operator = hashlib.sha256()
+        elif self.hash_choice == "Sha-3-256":
+            hash_operator = hashlib.sha3_256()
+
+        # Calculate hashes for the files
+        with open(file_path, 'rb') as file:
+            while True:
+                data = file.read(8192)  # Read data in chunks.
+                if not data:
+                    break
+                hash_operator.update(data)
+
+        return hash_operator.hexdigest()
+
+    def checksum_comparison(self):
+        # Iterate through the list of possible matches.
+        for reference_path, target_path in zip(self.possible_match_list_refrence, self.possible_match_list_target):
+            
+            reference_hash = self.calculate_hash(reference_path)
+            target_hash = self.calculate_hash(target_path)
+
+            # If hashes DO NOT match
+            if reference_hash != target_hash:
+                # Add the reference path to the list of missing files.
+                self.missing_files_list.append(reference_path)
+                # add one to the count of diff files and one to the left only total
+                self.diff_files_total += 1
+                self.left_only_total += 1
+
+                # remove the reference and target  paths from thier respective lists of possible matches
+                self.possible_match_list_refrence.remove(reference_path)
+                self.possible_match_list_target.remove(target_path)
+                # remove one from the count of same files
+                self.same_files_total -= 1
+
+    def run(self, reference_dirs, target_dirs, hash_choice):
+        self.hash_choice = hash_choice
+        self.left_only_total = 0
+        self.right_only_total = 0
+        self.diff_files_total = 0
+        self.same_files_total = 0
+        self.possible_match_list_refrence = []
+        self.possible_match_list_target = []
+        self.missing_files_list = []
+
+        for reference_directory, target_directory in zip(reference_dirs, target_dirs):
+            self.compare_directories(reference_directory, target_directory)
+
+        if hash_choice != "None":
+            self.checksum_comparison()
+
+        # Calculate the total number of files in the reference and target directories.
+        total_files_reference = self.left_only_total + self.same_files_total
+        total_files_target = self.right_only_total + self.same_files_total
+
+        # Calculate the percentage of files missing from the target directory.
+        percentage_missing = round((self.left_only_total / total_files_reference) * 100, 2)
+
+        # Calculate the percentage of files that are the same between the reference and target directories.
+        percentage_same = round((self.same_files_total / total_files_reference) * 100, 2)
+
+        return self.left_only_total, self.right_only_total, self.diff_files_total, self.same_files_total, self.missing_files_list, total_files_reference, total_files_target, percentage_missing, percentage_same
+    
+def wrapper(reference_directory, target_directory, hash_choice):
+        
+
+    backup_inspector = BackupInspectorClass()
+    left_only_total, right_only_total, diff_files_total, same_files_total, missing_files_list, total_files_reference, total_files_target, percentage_missing, percentage_same = backup_inspector.run(reference_directory, target_directory, hash_choice)
+
+    #print(f"total_files_reference: {total_files_reference}")
+    #print(f"total_files_target: {total_files_target}")
+    #print(f"left_only_total: {left_only_total}")
+    #print(f"right_only_total: {right_only_total}")
+    #print(f"diff_files_total: {diff_files_total}")
+    #print(f"same_files_total: {same_files_total}")
+    #print(f"percentage_same: {percentage_same}")
+    #print(f"percentage_missing: {percentage_missing}")
+    #print(f"missing_files_list: {missing_files_list}")
+
+    files_only_in_dir1 = left_only_total
+    files_only_in_dir2 = right_only_total
+    perfect_matches = same_files_total
+    files_scanned_in_dir1 = total_files_reference
+    files_scanned_in_dir2 = total_files_target
+    percent_matched_dir1 = percentage_same
+
 
     return (
         files_scanned_in_dir1,
@@ -59,12 +163,31 @@ def compare_directories(reference_dirs, target_dirs):
         files_only_in_dir1,
         files_only_in_dir2,
         percent_matched_dir1,
-        percent_matched_dir2,
-        set1,
-        set2,
-        set_dir1,
-        set_dir2
+        percentage_missing,
+        missing_files_list
+
         )
+
+def file_copier(reference_dirs, target_dirs, missing_files_list):
+
+    for reference_dir, target_dir in zip(reference_dirs, target_dirs):
+
+        # determine which of the missing files are in the current reference directory
+        missing_files_list_chunk = [file for file in missing_files_list if reference_dir in file]
+
+        for missing_file_path in missing_files_list_chunk:
+            # Determine the relative path of the missing file within the reference directory
+            relative_path = os.path.relpath(missing_file_path, reference_dir)
+
+            # Construct the target file path
+            target_file_path = os.path.join(target_dir, relative_path)
+
+            # Ensure the target directory exists
+            os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
+
+            # Copy the missing file to the target directory
+            shutil.copy(missing_file_path, target_file_path)
+
 
 
 def resource_path(relative_path):
@@ -72,7 +195,17 @@ def resource_path(relative_path):
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
+def wrap_text_with_template(input_text):
+    template = """
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+    <html><head><meta name="qrichtext" content="1" /><style type="text/css">
+    p, li { white-space: pre-wrap; }
+    </style></head><body style=" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; ">
+    <p align="justify" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">INSERT INPUT TEXT STRING HERE!</p></body></html>
+    """
+    return template.replace("INSERT INPUT TEXT STRING HERE!", input_text)
 
+#%% - Front End UI
 # Load the UI file
 Form, Window = uic.loadUiType("interface.ui")
 app = QApplication([])
@@ -84,8 +217,6 @@ class MainWindow(QMainWindow):
         self.ui = Form()
         self.ui.setupUi(self)
         self.check_preferences()
-        self.setWindowTitle("BackupInspector")             # set name for window in taskbar and title bar
-        self.setWindowIcon(QIcon(resource_path(r"Icons\BackupInspectorIcon.png")))   # add icon to window
 
         # Left Menu
         self.left_menu_animation = QPropertyAnimation(self.ui.leftMenuContainer, b"maximumWidth")
@@ -93,11 +224,10 @@ class MainWindow(QMainWindow):
         self.left_menu_animation.setDuration(1000)  # Animation duration in milliseconds
         self.ui.leftMenuBtn_UiBtnType.clicked.connect(self.expandorshrink_left_menu)
         self.highlightedLeftMenuBtn = self.ui.homeBtn_UiBtnType
-        self.ui.leftMenuContainer.setMaximumWidth(50)   # start with left menu shrunk by setting max width to 50
+        #self.ui.leftMenuContainer.setMaximumWidth(50)   # start with left menu shrunk by setting max width to 50
 
         self.ui.homeBtn_UiBtnType.clicked.connect(lambda: self.handle_left_menu(page=self.ui.homePage, button=self.ui.homeBtn_UiBtnType))
         self.ui.reportBtn_UiBtnType.clicked.connect(lambda: self.handle_left_menu(page=self.ui.reportPage, button=self.ui.reportBtn_UiBtnType))
-        self.ui.dataBtn_UiBtnType.clicked.connect(lambda: self.handle_left_menu(page=self.ui.dataPage, button=self.ui.dataBtn_UiBtnType))
         self.ui.settingsBtn_UiBtnType.clicked.connect(lambda: self.handle_centre_menu(page=self.ui.settingsCenterMenuPage))
         self.ui.infoBtn_UiBtnType.clicked.connect(lambda: self.handle_centre_menu(page=self.ui.infoCenterMenuPage))
         self.ui.helpBtn_UiBtnType.clicked.connect(lambda: self.handle_centre_menu(page=self.ui.helpCenterMenuPage))
@@ -114,7 +244,6 @@ class MainWindow(QMainWindow):
         self.notification_animation = QPropertyAnimation(self.ui.popupNotificationContainer, b"maximumHeight")
         self.notification_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
         self.notification_animation.setDuration(1000)
-        self.ui.notificationCloseBtn_UiBtnType.clicked.connect(lambda: self.run_animation(self.notification_animation, start=100, end=0))
         self.ui.popupNotificationContainer.setMaximumHeight(0)  # Set notification container to start hidden (with max height of 0)
 
         # ui theme dark / light
@@ -128,32 +257,47 @@ class MainWindow(QMainWindow):
 
         ### SETTINGS PAGE
         self.ui.themesListSelector.currentTextChanged.connect(self.set_theme)
+        #self.ui.checkForUpdates_ProgramBtnType.clicked.connect(self.check_online_for_updates)
 
+        ### HELP & INFO PAGES
+        self.help_text_path = resource_path(r"copy\help_text.txt")
+        self.set_help_text(self.help_text_path)
+
+        self.info_text_path = resource_path(r"copy\info_text.txt")
+        self.set_info_text(self.info_text_path)
+
+        ### Initialise Main Program Ui - (Split for modularity from the general UI which is maintained seperatly as a unified UI for all my current projects)
         self.init_program()
 
     def init_program(self):
-        
+        # Settings page
+        self.ui.hashTypeSelector.currentTextChanged.connect(self.set_hash_method)
+        self.hash_choice = 'None'
+
+        # Backend Variables
         self.selected_directories1 = []
         self.selected_directories2 = []
-
         self.list1 = self.ui.list1
         self.list2 = self.ui.list2
 
+        # Home Page
         self.ui.pushButton_2_ProgramBtnType.clicked.connect(self.add_folder)
         self.ui.pushButton_3_ProgramBtnType.clicked.connect(self.run_backupinspector)
         self.ui.pushButton_4_ProgramBtnType.clicked.connect(self.add_folder2)
         self.ui.pushButton_5_ProgramBtnType.clicked.connect(self.delete_folder)
         self.ui.pushButton_6_ProgramBtnType.clicked.connect(self.delete_folder2)
-
-        self.ui.show_report_txt_ProgramBtnType.clicked.connect(self.show_results_txt)
-        #self.ui.copy_all_missing_files_button_ProgramBtnType.clicked.connect(self.copy_all_missing_files)
-
+        self.ui.saveConfig_ProgramBtnType.clicked.connect(self.save_config_to_disk)
+        self.ui.loadConfig_ProgramBtnType.clicked.connect(self.load_config_from_disk)
+        self.ui.useChecksumCheckbox.stateChanged.connect(self.set_hash_method)
+        self.ui.recoverMissingFiles_ProgramBtnType.clicked.connect(self.copy_all_missing_files)
         self.ICON_RED_LED = QPixmap(resource_path(r"Icons\LEDs\led-red-on.png"))
         self.ICON_BLUE_LED = QPixmap(resource_path(r"Icons\LEDs\blue-led-on.png"))
         self.ICON_GREEN_LED = QPixmap(resource_path(r"Icons\LEDs\green-led-on.png"))
 
-        self.tiparrow = QPixmap("Icons/arrowtip.png")
-        self.notiparrow = QPixmap()
+        # Report Page
+        self.ui.viewReportPage_ProgramBtnType.clicked.connect(lambda: self.handle_left_menu(page=self.ui.reportPage, button=self.ui.reportBtn_UiBtnType))
+        self.ui.show_report_txt_ProgramBtnType.clicked.connect(self.show_results_txt)
+        self.ui.recoverMissingFiles2_ProgramBtnType.clicked.connect(self.copy_all_missing_files)
 
 
 
@@ -212,24 +356,20 @@ class MainWindow(QMainWindow):
     def set_icons_white(self):
         self.ui.leftMenuBtn_UiBtnType.setIcon(self.iconw)
         self.ui.homeBtn_UiBtnType.setIcon(self.icon1w)
-        self.ui.dataBtn_UiBtnType.setIcon(self.icon2sw)
         self.ui.reportBtn_UiBtnType.setIcon(self.icon2w)
         self.ui.settingsBtn_UiBtnType.setIcon(self.icon3w)
         self.ui.infoBtn_UiBtnType.setIcon(self.icon4w)
         self.ui.helpBtn_UiBtnType.setIcon(self.icon5w)
         self.ui.centerMenuCloseBtn_UiBtnType.setIcon(self.icon6w)
-        self.ui.notificationCloseBtn_UiBtnType.setIcon(self.icon6w)
 
     def set_icons_black(self):
         self.ui.leftMenuBtn_UiBtnType.setIcon(self.iconb)
         self.ui.homeBtn_UiBtnType.setIcon(self.icon1b)
-        self.ui.dataBtn_UiBtnType.setIcon(self.icon2sb)
         self.ui.reportBtn_UiBtnType.setIcon(self.icon2b)
         self.ui.settingsBtn_UiBtnType.setIcon(self.icon3b)
         self.ui.infoBtn_UiBtnType.setIcon(self.icon4b)
         self.ui.helpBtn_UiBtnType.setIcon(self.icon5b)
         self.ui.centerMenuCloseBtn_UiBtnType.setIcon(self.icon6b)
-        self.ui.notificationCloseBtn_UiBtnType.setIcon(self.icon6b)
 
     def check_preferences(self):
         # set the default theme to the one saved in the startup_theme.txt file if it exists otherwqise set it to default
@@ -262,12 +402,26 @@ class MainWindow(QMainWindow):
             self.run_animation(self.left_menu_animation, start=250, end=50)
 
     def handle_centre_menu(self, page):
-        # If the center menu is closed (width = 5), then it is opened
-        if self.ui.centerMenuContainer.maximumWidth() == 5:
-            self.run_animation(self.center_menu_animation, start=5, end=250)
-        
-        # The correct center menu page is set for centerMenuPagesStack
-        self.ui.centerMenuPagesStack.setCurrentWidget(page)
+        # if the button pressed is the same as the current page and the menu is open then close the center menu
+        if self.ui.centerMenuPagesStack.currentWidget() == page and self.ui.centerMenuContainer.maximumWidth() != 5:
+            self.run_animation(self.center_menu_animation, start=250, end=5)  
+        else:
+            # If the center menu is closed (width = 5), then it is opened
+            if self.ui.centerMenuContainer.maximumWidth() == 5:
+                self.run_animation(self.center_menu_animation, start=5, end=250)
+
+            # The correct center menu page is set for centerMenuPagesStack
+            self.ui.centerMenuPagesStack.setCurrentWidget(page)
+
+    def set_help_text(self, help_file_path):
+        with open(help_file_path, "r") as file:
+            #self.ui.helpTextCopy.setText(wrap_text_with_template(file.read()))
+            self.ui.helpTextCopy.setText(file.read())
+
+    def set_info_text(self, info_file_path):
+        with open(info_file_path, "r") as file:
+            #self.ui.infoTextCopy.setText(wrap_text_with_template(file.read()))
+            self.ui.infoTextCopy.setText(file.read())
 
     def set_theme(self):
         '''Sets the theme of the UI based on the selected theme in the themesListSelector'''
@@ -319,7 +473,7 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem(directory)
             self.list1.addItem(item)
         self.change_run_button_state()
-        self.change_user_tip_status_1()
+
 
     def update_list2(self):
         self.list2.clear()
@@ -327,7 +481,7 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem(directory)
             self.list2.addItem(item)
         self.change_run_button_state()
-        self.change_user_tip_status_2()
+
 
     def add_folder(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Directories")
@@ -346,39 +500,14 @@ class MainWindow(QMainWindow):
             self.selected_directories1.remove(item.text())
             self.list1.takeItem(self.list1.row(item))
         self.change_run_button_state()
-        self.change_user_tip_status_1()
+ 
 
     def delete_folder2(self):
         for item in self.list2.selectedItems():
             self.selected_directories2.remove(item.text())
             self.list2.takeItem(self.list2.row(item))
         self.change_run_button_state()
-        self.change_user_tip_status_2()
     
-
-    def change_user_tip_status_1(self):
-        if self.selected_directories1:
-            # move the QtextBrowser to the back layer
-            self.ui.ref_user_tip.lower()
-            # remove arrow from label pixmap by setting to no pixmap
-            #self.ui.tip_arrow_1.setPixmap(self.notiparrow)
-        else:
-            # move the QtextBrowser to the front layer
-            self.ui.ref_user_tip.raise_()
-            # add arrow to label pixmap
-            #self.ui.tip_arrow_1.setPixmap(self.tiparrow)
-
-    def change_user_tip_status_2(self):
-        if self.selected_directories2:
-            # move the QtextBrowser to the back layer
-            self.ui.target_user_tip.lower()
-            # remove arrow from label pixmap
-            #self.ui.tip_arrow_2.setPixmap(self.notiparrow)
-        else:
-            # move the QtextBrowser to the front layer
-            self.ui.target_user_tip.raise_()
-            # add arrow to label pixmap
-            #self.ui.tip_arrow_2.setPixmap(self.tiparrow)
 
     # function to toggle led's state based on results
     def update_led(self):
@@ -398,7 +527,55 @@ class MainWindow(QMainWindow):
         else:
             self.ui.test_status_text.setText("TEST: FAILED")
         # enable the show report button
-        self.ui.show_report_txt_ProgramBtnType.setEnabled(True)
+        #self.ui.show_report_txt_ProgramBtnType.setEnabled(True)
+        self.ui.viewReportPage_ProgramBtnType.setEnabled(True)
+
+
+
+
+        #### REPORT PAGE UPDATE ####
+        self.ui.refFilesNumberReadout.display(self.files_scanned_1)
+        self.ui.targetFilesNumberReadout.display(self.files_scanned_2)
+        self.ui.percentMatchedReadout.setText(f"{self.percent_matched_dir1}%")
+        self.ui.percentMissingReadout.setText(f"{self.percentage_missing}%")
+        self.ui.missingNumberReadout.setText(f"{self.files_scanned_1 - self.num_perfect_matches}")
+        self.ui.matchedNumberReadout.setText(f"{self.num_perfect_matches}")
+
+        self.update_rotary_color_wheels()
+
+        self.ui.reportMissingFileList.clear()
+        for file in self.missing_files_list:
+            item = QListWidgetItem(file)
+            self.ui.reportMissingFileList.addItem(item)
+
+    def update_rotary_color_wheels(self):
+        # convert percentages to decimal values
+        percent_good = self.percent_matched_dir1 / 100
+        percent_bad = 1 - percent_good
+
+        # calculate the stop values for the color gradients as +- 5% of the percentages but cliped to min 0 and max 1
+        if percent_good >= 1.0:
+            self.ui.filesfoundRadialColorWheel.setStyleSheet(f"background-color: rgba(7, 255, 119, 1);\nborder: 1px solid rgb(33, 24, 94);\nborder-radius: 60;")
+
+        elif percent_good <= 0.0:
+            self.ui.filesfoundRadialColorWheel.setStyleSheet(f"background-color: rgba(29, 21, 83, 1);\nborder: 1px solid rgb(33, 24, 94);\nborder-radius: 60;")
+        else:
+            green_stop1 = max(0, percent_good - 0.10)
+            green_stop2 = min(1, percent_good + 0.05)
+            self.ui.filesfoundRadialColorWheel.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:{green_stop1} rgba(7, 255, 119, 1), stop:{green_stop2} rgba(29, 21, 83, 1));\nborder: 1px solid rgb(33, 24, 94);\nborder-radius: 60;")
+        
+        if percent_bad >= 1.0:
+            self.ui.filesmissingRadialColorWheel.setStyleSheet(f"background-color: rgba(255, 17, 80, 1);\nborder: 1px solid rgb(33, 24, 94);\nborder-radius: 60;")
+
+        elif percent_bad <= 0.0:
+            self.ui.filesmissingRadialColorWheel.setStyleSheet(f"background-color: rgba(29, 21, 83, 1);\nborder: 1px solid rgb(33, 24, 94);\nborder-radius: 60;")
+
+        else:
+            red_stop2 = 1 - max(0, percent_bad - 0.10)
+            red_stop1 = 1 - min(1, percent_bad + 0.05)
+            self.ui.filesmissingRadialColorWheel.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:{red_stop1} rgba(29, 21, 83, 1), stop:{red_stop2} rgba(255, 17, 80, 1));\nborder: 1px solid rgb(33, 24, 94);\nborder-radius: 60;")
+        
+
 
     def show_results_txt(self):
         # find temp directory
@@ -437,17 +614,11 @@ class MainWindow(QMainWindow):
             # Write number of files in target dirs (dir2) that are not in refrence dirs (dir1)
             f.write(f"Files in target not in reference: {self.num_files_only_in_dir2}\n\n\n")
 
-
             # Write list of the file names of the files that are only in dir1
             f.write("\n### Files missing from Target:\n")
-            for file in self.set1 - self.set2:
+            for file in self.missing_files_list:
                 f.write(f"\n# {file}\n")
-            """
-            # Write list of the file names of the files that are only in dir2
-            f.write("\nFiles only in dir2:\n")
-            for file in set2 - set1:
-                f.write(f"\n# {file}\n")
-            """
+
 
         # Open the file in Notepad 
         subprocess.Popen(["notepad.exe", file_path])   # Subprocess so as not to block the rest of the program
@@ -456,21 +627,52 @@ class MainWindow(QMainWindow):
 
     # function to copy all missing files to target
     def copy_all_missing_files(self):
-        missing_files = self.set1 - self.set2
+        self.run_animation(self.notification_animation, start=0, end=100)    # raise the notification popup
+        file_copier(self.selected_directories1, self.selected_directories2, self.missing_files_list)
+        self.run_animation(self.notification_animation, start=100, end=0)    # lower the notification popup
 
-        # find the corresponding file in set_dir1
-        for file in missing_files:
-            for file_path in self.set_dir1:
-                if file == os.path.basename(file_path):
-                    # find the corresponding target directory by checking if the file_path contains any of the the selected directoies in self.selected_directories2
-                    for target_dir in self.selected_directories2:
-                        if target_dir in file_path:
-                            # copy file to target directory
-                            shutil.copy(file_path, target_dir)
-                            print(f"{file_path} copied to {target_dir}")
-                            break  
-                        else:
-                            print(f"Could not find target directory {target_dir} for {file_path}")
+
+
+    def save_config_to_disk(self):
+        # save the reference and target directories lists to a text file 
+        with open("config.txt", "w") as file:
+            for directory in self.selected_directories1:
+                file.write(f"{directory}\n")
+            file.write("###\n")
+            for directory in self.selected_directories2:
+                file.write(f"{directory}\n")
+
+
+
+
+    def load_config_from_disk(self):
+        # load the reference and target directories lists from a text file and add them to the list widgets
+        self.selected_directories1 = []
+        self.selected_directories2 = []
+        with open("config.txt", "r") as file:
+            for line in file:
+                if line == "###\n":
+                    break
+                else:
+                    self.selected_directories1.append(line.strip())
+            for line in file:
+                self.selected_directories2.append(line.strip())
+        self.update_list1()
+        self.update_list2()
+        
+    def set_hash_method(self):
+        hash_type = self.ui.hashTypeSelector.currentText()
+        if self.ui.useChecksumCheckbox.isChecked():
+            self.hash_choice = hash_type
+        else:
+            self.hash_choice = "None"
+
+        
+
+
+
+
+
 
     def change_run_button_state(self):
         if self.selected_directories1 and self.selected_directories2:
@@ -480,19 +682,24 @@ class MainWindow(QMainWindow):
 
 
     def run_backupinspector(self):
-        reference_dirs = self.selected_directories1
-        target_dirs = self.selected_directories2
-        self.files_scanned_1, self.files_scanned_2, self.num_perfect_matches, self.num_files_only_in_dir1, self.num_files_only_in_dir2, self.percent_matched_dir1, self.percent_matched_dir2, self.set1, self.set2, self.set_dir1, self.set_dir2 = compare_directories(reference_dirs, target_dirs)
+        #self.ui.popupNotificationContainer.setMaximumHeight(100)
+        #self.run_animation(self.notification_animation, start=100, end=100)    # lower the notification popup
+        self.files_scanned_1, self.files_scanned_2, self.num_perfect_matches, self.num_files_only_in_dir1, self.num_files_only_in_dir2, self.percent_matched_dir1, self.percentage_missing, self.missing_files_list = wrapper(self.selected_directories1, self.selected_directories2, self.hash_choice)
         
         self.update_led()
         self.update_results()
+        self.ui.reportBtn_UiBtnType.setEnabled(True)
+        #self.run_animation(self.notification_animation, start=100, end=0)    # lower the notification popup
 
 
 
+
+
+
+
+#%% - Run Program
 if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
-
-
 

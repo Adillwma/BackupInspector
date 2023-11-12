@@ -54,3 +54,13 @@ QPushButton[objectName*="_ProgramBtnType"]{
     background-color: #c5ccd9;
 }
 
+
+QProgressBar {
+    border-radius: 5px;
+    background-color: #FF0000;
+}
+
+QProgressBar::chunk {
+
+
+}

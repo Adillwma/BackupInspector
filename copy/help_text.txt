@@ -1,0 +1,16 @@
+BackupInspector 2023 Help
+
+To run the BackupInspector you must select your reference and target directories, these files in these directories should match, i.e., if you backup a folder called "My Documents" into to a folder called "My Documents Backup" then the reference directory would be the original "My Documents" folder and the target directory should be the "My Documents" folder inside the "My Documents Backup". 
+If instead you back up your files from inside the "My Documents" folder to be in the root of "My Documents Backup" then "My Documents Backup" will be the target folder. If you have a complex set of folders to scan you can save the selected directories as a config by clicking the save config button, which will let you choose a name for the config and save it to the config folder. You can then load the config by clicking the load config button and selecting the config file you want to load. This simplifies setting up the inspector for repeated tasks and if switching between different tasks.
+
+
+BackupInspector by default compares file based on the filename and metadata???, by ticking the verify checksum hashes box on the scan page the Inspector will also compare the checksum hashes of the files to make sure the file contents match and to guard against file corruption. This is more accurate, but slower. A number of checksum algorithms are supported, the default is MD5 for speed, but you can select SHA-1, SHA-256 or SHA-3-256 in the settings tab.
+
+Once a BackupInspector scan is started, the program will compare the directories and report the number of missing files in the target. Once the investigation is concluded, the detective will produce a final full report for you which is available on the report tab, or by clicking the "see report" button from the scan page. In the report there is a list of all the files that are missing from the target directory, you can navigate to any of the files in the list by double clicking on its filename in the list. You can also copy all the missing files to the target directory by clicking the "rescue missing files" button, which will initiate the copy and then rerun the BackupInspector scan automatically to verify that all the missing files have now been successfully recovered.
+
+
+
+Additional Features includes various UI colour themes selectable from the settings page, light and dark UI modes by clicking the sun/moon button in the top right corner, and a fully resizable UI for all screen sizes.
+
+
+For more information, please see the readme available at [LINK TO GITHUB README PAGE!!!]

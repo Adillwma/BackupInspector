@@ -1,0 +1,64 @@
+* {
+    border: none;
+    background: transparent;
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+    color: #fff;
+}
+
+#centralwidget {
+    background-color: #1f232a;
+}
+
+#leftMenuSubContainer {
+    background-color: #2f2f4f;
+}
+
+QListWidget{
+    background-color: rgb(44, 49, 60);
+    
+    }
+
+    
+QPushButton[objectName*="_ProgramBtnType"]{
+    background: fill;
+    background-color: #343b47;
+    padding: 0;
+    margin: 0;
+    }
+    
+#leftMenuSubContainer QPushButton[objectName*="_UiBtnType"]{
+    text-align: left;
+    padding: 2px 10px;
+    border-top-left-radius:10px;
+    border-bottom-left-radius:10px;
+}
+
+#centerMenuSubContainer,
+#rightMenuSubContainer {
+    background-color: #2c313c;
+}
+
+#frame_4,
+#frame8,
+#popupNotificationSubContainer {
+    background-color: #2f2f4f;
+    border-radius: 10px;
+}
+
+#headerContainer,
+#footerContainer {
+    background-color: #2c313c;
+}
+
+
+QProgressBar {
+    border-radius: 5px;
+    background-color: #FF0000;
+}
+
+QProgressBar::chunk {
+
+
+}

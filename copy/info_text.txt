@@ -1,0 +1,7 @@
+BackupInspector 2023
+Version: 1.0.1 (x64) 
+[LINK TO RELEASE NOTES PAGE!!!]
+
+A simple lightweight windows application to verify the integrity of your backup files.
+
+Copyright © BACKUPDETECTIVE LTD. 2023 - All Rights Reserved
