@@ -10,6 +10,7 @@ import shutil
 import sys
 import os
 import time
+import requests
 
 
 # Load in the resources file
@@ -216,7 +217,22 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = Form()
         self.ui.setupUi(self)
+
+        # Simple Customisation Settings
+        self.online_version_file_link = "https://github.com/Adillwma/BackupInspector/blob/main/version.txt"
+        self.update_download_link = "https://github.com/Adillwma/BackupInspector/raw/main/BackupInspector.exe"
+
         self.check_preferences()
+
+        self.help_text_path = resource_path(r"copy\help_text.txt")
+        self.info_text_path = resource_path(r"copy\info_text.txt")
+
+        ### Initialise UI Elements
+        self.init_modularUI()           # Modular Unified Ui
+        self.init_programUI()           # Main Program Ui elements
+
+    #%% - Initialise Ui Elements
+    def init_modularUI(self):
 
         # Left Menu
         self.left_menu_animation = QPropertyAnimation(self.ui.leftMenuContainer, b"maximumWidth")
@@ -244,6 +260,7 @@ class MainWindow(QMainWindow):
         self.notification_animation = QPropertyAnimation(self.ui.popupNotificationContainer, b"maximumHeight")
         self.notification_animation.setEasingCurve(QEasingCurve.Type.InOutQuart)
         self.notification_animation.setDuration(1000)
+        self.ui.notificationCloseBtn_UiBtnType.clicked.connect(lambda: self.run_animation(self.notification_animation, start=100, end=0))
         self.ui.popupNotificationContainer.setMaximumHeight(0)  # Set notification container to start hidden (with max height of 0)
 
         # ui theme dark / light
@@ -257,19 +274,13 @@ class MainWindow(QMainWindow):
 
         ### SETTINGS PAGE
         self.ui.themesListSelector.currentTextChanged.connect(self.set_theme)
-        #self.ui.checkForUpdates_ProgramBtnType.clicked.connect(self.check_online_for_updates)
+        self.ui.checkForUpdates_ProgramBtnType.clicked.connect(self.check_online_for_updates)
+        self.ui.downloadUpdateBtn_ProgramBtnType.clicked.connect(self.download_latest_version)
 
         ### HELP & INFO PAGES
-        self.help_text_path = resource_path(r"copy\help_text.txt")
-        self.set_help_text(self.help_text_path)
+        self.set_helpandinfo_copy(self.help_text_path, self.info_text_path)
 
-        self.info_text_path = resource_path(r"copy\info_text.txt")
-        self.set_info_text(self.info_text_path)
-
-        ### Initialise Main Program Ui - (Split for modularity from the general UI which is maintained seperatly as a unified UI for all my current projects)
-        self.init_program()
-
-    def init_program(self):
+    def init_programUI(self):
         # Settings page
         self.ui.hashTypeSelector.currentTextChanged.connect(self.set_hash_method)
         self.hash_choice = 'None'
@@ -299,8 +310,7 @@ class MainWindow(QMainWindow):
         self.ui.show_report_txt_ProgramBtnType.clicked.connect(self.show_results_txt)
         self.ui.recoverMissingFiles2_ProgramBtnType.clicked.connect(self.copy_all_missing_files)
 
-
-
+    #%% - Modular Ui Functions
     def init_icons(self):
         
         self.iconw = QIcon()
@@ -361,6 +371,7 @@ class MainWindow(QMainWindow):
         self.ui.infoBtn_UiBtnType.setIcon(self.icon4w)
         self.ui.helpBtn_UiBtnType.setIcon(self.icon5w)
         self.ui.centerMenuCloseBtn_UiBtnType.setIcon(self.icon6w)
+        self.ui.notificationCloseBtn_UiBtnType.setIcon(self.icon6w)
 
     def set_icons_black(self):
         self.ui.leftMenuBtn_UiBtnType.setIcon(self.iconb)
@@ -370,6 +381,7 @@ class MainWindow(QMainWindow):
         self.ui.infoBtn_UiBtnType.setIcon(self.icon4b)
         self.ui.helpBtn_UiBtnType.setIcon(self.icon5b)
         self.ui.centerMenuCloseBtn_UiBtnType.setIcon(self.icon6b)
+        self.ui.notificationCloseBtn_UiBtnType.setIcon(self.icon6b)
 
     def check_preferences(self):
         # set the default theme to the one saved in the startup_theme.txt file if it exists otherwqise set it to default
@@ -413,14 +425,11 @@ class MainWindow(QMainWindow):
             # The correct center menu page is set for centerMenuPagesStack
             self.ui.centerMenuPagesStack.setCurrentWidget(page)
 
-    def set_help_text(self, help_file_path):
+    def set_helpandinfo_copy(self, help_file_path, info_file_path):
         with open(help_file_path, "r") as file:
-            #self.ui.helpTextCopy.setText(wrap_text_with_template(file.read()))
             self.ui.helpTextCopy.setText(file.read())
 
-    def set_info_text(self, info_file_path):
         with open(info_file_path, "r") as file:
-            #self.ui.infoTextCopy.setText(wrap_text_with_template(file.read()))
             self.ui.infoTextCopy.setText(file.read())
 
     def set_theme(self):
@@ -464,9 +473,39 @@ class MainWindow(QMainWindow):
             self.highlightedLeftMenuBtn.setStyleSheet(self.highlight_theme_color)
             self.set_icons_black()
 
+    def check_online_for_updates(self):
+        '''Checks online for updates and displays a notification if there is one'''
 
+        # Get the current version from the version.txt file
+        with open("version.txt", "r") as file:
+            current_version = file.read()
 
-    ### PROGRAM FUNCTIONS ###
+        # Get the latest version from the online version.txt file
+        try:
+            response = requests.get(self.online_version_file_link)
+            latest_version = response.text
+        except:
+            self.ui.popupNotificationText.setText("Unable to check for updates")
+            self.run_animation(self.notification_animation, start=0, end=100)
+            return
+        
+        print(f"current_version: {current_version}")
+        print(f"latest_version: {latest_version}")
+        # If the current version is not the same as the latest version then display a notification
+        if current_version != latest_version:
+            self.ui.popupNotificationText.setText("There is a new version available")
+            self.run_animation(self.notification_animation, start=0, end=100)
+            self.ui.downloadUpdateBtn_ProgramBtnType.setEnabled(True)   # Enable the update button
+
+        else:
+            self.ui.popupNotificationText.setText("You are using the latest version!")
+            self.run_animation(self.notification_animation, start=0, end=100)
+
+    def download_latest_version(self):
+        # open link in users default browser
+        os.startfile(self.update_download_link)
+
+    #%% - Main Program Functions
     def update_list1(self):
         self.list1.clear()
         for directory in self.selected_directories1:
@@ -474,14 +513,12 @@ class MainWindow(QMainWindow):
             self.list1.addItem(item)
         self.change_run_button_state()
 
-
     def update_list2(self):
         self.list2.clear()
         for directory in self.selected_directories2:
             item = QListWidgetItem(directory)
             self.list2.addItem(item)
         self.change_run_button_state()
-
 
     def add_folder(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Directories")
@@ -501,14 +538,12 @@ class MainWindow(QMainWindow):
             self.list1.takeItem(self.list1.row(item))
         self.change_run_button_state()
  
-
     def delete_folder2(self):
         for item in self.list2.selectedItems():
             self.selected_directories2.remove(item.text())
             self.list2.takeItem(self.list2.row(item))
         self.change_run_button_state()
     
-
     # function to toggle led's state based on results
     def update_led(self):
         number = self.files_scanned_1 - self.num_perfect_matches
@@ -575,8 +610,6 @@ class MainWindow(QMainWindow):
             red_stop1 = 1 - min(1, percent_bad + 0.05)
             self.ui.filesmissingRadialColorWheel.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:{red_stop1} rgba(29, 21, 83, 1), stop:{red_stop2} rgba(255, 17, 80, 1));\nborder: 1px solid rgb(33, 24, 94);\nborder-radius: 60;")
         
-
-
     def show_results_txt(self):
         # find temp directory
         temp_dir = os.environ.get("TEMP")
@@ -623,15 +656,11 @@ class MainWindow(QMainWindow):
         # Open the file in Notepad 
         subprocess.Popen(["notepad.exe", file_path])   # Subprocess so as not to block the rest of the program
 
-
-
     # function to copy all missing files to target
     def copy_all_missing_files(self):
         self.run_animation(self.notification_animation, start=0, end=100)    # raise the notification popup
         file_copier(self.selected_directories1, self.selected_directories2, self.missing_files_list)
         self.run_animation(self.notification_animation, start=100, end=0)    # lower the notification popup
-
-
 
     def save_config_to_disk(self):
         # save the reference and target directories lists to a text file 
@@ -641,9 +670,6 @@ class MainWindow(QMainWindow):
             file.write("###\n")
             for directory in self.selected_directories2:
                 file.write(f"{directory}\n")
-
-
-
 
     def load_config_from_disk(self):
         # load the reference and target directories lists from a text file and add them to the list widgets
@@ -667,19 +693,11 @@ class MainWindow(QMainWindow):
         else:
             self.hash_choice = "None"
 
-        
-
-
-
-
-
-
     def change_run_button_state(self):
         if self.selected_directories1 and self.selected_directories2:
             self.ui.pushButton_3_ProgramBtnType.setEnabled(True)
         else:
             self.ui.pushButton_3_ProgramBtnType.setEnabled(False)
-
 
     def run_backupinspector(self):
         #self.ui.popupNotificationContainer.setMaximumHeight(100)

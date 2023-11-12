@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1380</width>
-    <height>945</height>
+    <width>1136</width>
+    <height>736</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -43,15 +43,6 @@ color: #fff;
 
 }
 
-QProgressBar {
-     border-radius: 5px;
-     background-color: #FF0000;
- }
-
- QProgressBar::chunk {
-
-
- }
 
  QPushButton[objectName*=&quot;_ProgramBtnType&quot;]{
 background: fill;
@@ -649,6 +640,34 @@ margin: 0;
                       </property>
                       <property name="text">
                        <string>Check for Updates</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QWidget" name="widget_11" native="true">
+                   <layout class="QHBoxLayout" name="horizontalLayout_22">
+                    <item>
+                     <widget class="QPushButton" name="downloadUpdateBtn_ProgramBtnType">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>25</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>120</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>Download Update</string>
                       </property>
                      </widget>
                     </item>
@@ -2167,9 +2186,6 @@ border-color: rgba(255, 255, 255, 0);</string>
              <item>
               <widget class="QWidget" name="popupNotificationHeaderContainer" native="true">
                <layout class="QHBoxLayout" name="horizontalLayout_4">
-                <property name="spacing">
-                 <number>0</number>
-                </property>
                 <property name="leftMargin">
                  <number>0</number>
                 </property>
@@ -2182,7 +2198,7 @@ border-color: rgba(255, 255, 255, 0);</string>
                 <property name="bottomMargin">
                  <number>0</number>
                 </property>
-                <item alignment="Qt::AlignLeft">
+                <item>
                  <widget class="QLabel" name="label_14">
                   <property name="font">
                    <font>
@@ -2192,7 +2208,30 @@ border-color: rgba(255, 255, 255, 0);</string>
                    </font>
                   </property>
                   <property name="text">
-                   <string>Processing....</string>
+                   <string>Notification</string>
+                  </property>
+                 </widget>
+                </item>
+                <item alignment="Qt::AlignRight">
+                 <widget class="QPushButton" name="notificationCloseBtn_UiBtnType">
+                  <property name="toolTip">
+                   <string>Close notification</string>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="resources.qrc">
+                    <normaloff>:/whiteicons/icons/light/x-circle.svg</normaloff>:/whiteicons/icons/light/x-circle.svg</iconset>
+                  </property>
+                  <property name="iconSize">
+                   <size>
+                    <width>24</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                  <property name="checkable">
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -2215,7 +2254,7 @@ border-color: rgba(255, 255, 255, 0);</string>
                  <number>0</number>
                 </property>
                 <item>
-                 <widget class="QLabel" name="label_13">
+                 <widget class="QLabel" name="popupNotificationText">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                     <horstretch>0</horstretch>
@@ -2315,6 +2354,7 @@ border-color: rgba(255, 255, 255, 0);</string>
  </widget>
  <resources>
   <include location="resources.qrc"/>
+  <include location="../Modern_UI_Start/resources.qrc"/>
  </resources>
  <connections/>
 </ui>
