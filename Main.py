@@ -207,6 +207,8 @@ def wrap_text_with_template(input_text):
     """
     return template.replace("INSERT INPUT TEXT STRING HERE!", input_text)
 
+
+
 #%% - Front End UI
 # Load the UI file
 Form, Window = uic.loadUiType("interface.ui")
@@ -220,14 +222,14 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
 
         # Simple Customisation Settings
-        self.online_version_file_link = "https://github.com/Adillwma/BackupInspector/raw/main/version.json"    # Make sure to use the raw link to the file, (you can swap the blob in the normal link to raw)
+        self.online_version_file_link = "https://github.com/Adillwma/BackupInspector/raw/main/config.json"    # Make sure to use the raw link to the file, (you can swap the blob in the normal link to raw)
         self.update_download_link = "https://github.com/Adillwma/BackupInspector/raw/main/BackupInspector.exe"
 
-        self.config_file = 'config.json'
-        self.check_preferences()
+        self.config_file = 'App_Data\config.json'
+        self.check_preferences()          # Checks the user preferences file to load the correct settings
 
-        self.help_text_path = resource_path(r"copy\help_text.txt")
-        self.info_text_path = resource_path(r"copy\info_text.txt")
+        self.help_text_path = resource_path(r"App_Data\copy\help_text.txt")
+        self.info_text_path = resource_path(r"App_Data\copy\info_text.txt")
 
         ### Initialise UI Elements
         self.init_modularUI()           # Modular Unified Ui
@@ -435,10 +437,10 @@ class MainWindow(QMainWindow):
 
     def set_helpandinfo_copy(self, help_file_path, info_file_path):
         with open(help_file_path, "r") as file:
-            self.ui.helpTextCopy.setText(file.read())
+            self.ui.helpTextCopy.setText(self.ui.helpTextCopy.toHtml().replace("Help file failed to load. Sorry for the mix-up, we are scrambling to fix it!", file.read()))
 
         with open(info_file_path, "r") as file:
-            self.ui.infoTextCopy.setText(file.read())
+            self.ui.infoTextCopy.setText(self.ui.infoTextCopy.toHtml().replace("Information file failed to load. Sorry for the mix-up, we are scrambling to fix it!", file.read()))
 
     def set_theme(self):
         '''Sets the theme of the UI based on the selected theme in the themesListSelector'''
@@ -460,9 +462,18 @@ class MainWindow(QMainWindow):
             with open(self.light_mode_path, "r") as file:
                 self.setStyleSheet(file.read())
 
-        # Save the current theme to the startup_theme.txt file
-        with open("startup_theme.txt", "w") as file:
-            file.write(self.current_theme)
+        # Save the current theme as default startup theme in the config JSON file
+        with open(self.config_file, 'r') as file:
+            data = json.load(file)
+
+        data["Theme"] = self.current_theme   # Update the "Theme" value
+
+        with open(self.config_file, 'w') as file:
+            json.dump(data, file)  
+
+
+
+
 
     def switch_ui_mode(self):
         if self.current_ui_mode == "light":
@@ -617,7 +628,8 @@ class MainWindow(QMainWindow):
             red_stop2 = 1 - max(0, percent_bad - 0.10)
             red_stop1 = 1 - min(1, percent_bad + 0.05)
             self.ui.filesmissingRadialColorWheel.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:{red_stop1} rgba(29, 21, 83, 1), stop:{red_stop2} rgba(255, 17, 80, 1));\nborder: 1px solid rgb(33, 24, 94);\nborder-radius: 60;")
-        
+
+
     def show_results_txt(self):
         # find temp directory
         temp_dir = os.environ.get("TEMP")

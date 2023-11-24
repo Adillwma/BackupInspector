@@ -13,4 +13,5 @@ Once a BackupInspector scan is started, the program will compare the directories
 Additional Features includes various UI colour themes selectable from the settings page, light and dark UI modes by clicking the sun/moon button in the top right corner, and a fully resizable UI for all screen sizes.
 
 
-For more information, please see the readme available at [LINK TO GITHUB README PAGE!!!]
+For more information, please see the readme available via:
+</span><a href="https://github.com/Adillwma/BackupInspector"><span style=" text-decoration: underline; color:#0000ff;">BackupInspector on GitHub</span></a>

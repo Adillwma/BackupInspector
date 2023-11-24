@@ -4,3 +4,5 @@ __pycache__/
 Old/
 startup_theme.txt
 *.svg
+.gitignore
+config.txt

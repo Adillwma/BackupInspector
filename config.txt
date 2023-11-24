@@ -1,5 +1,0 @@
-A:/Users/Ada/GitHub/BackupInspector/Icons
-A:/Users/Ada/GitHub/BackupInspector/copy
-###
-A:/Users/Ada/GitHub/BackupInspector/private
-A:/Users/Ada/GitHub/BackupInspector/Old

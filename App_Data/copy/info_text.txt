@@ -1,6 +1,6 @@
 BackupInspector 2023
 Version: 1.0.1 (x64) 
-[LINK TO RELEASE NOTES PAGE!!!]
+ </span><a href="https://github.com/Adillwma/BackupInspector/commits/main"><span style=" text-decoration: underline; color:#0000ff;">Release Notes</span></a>
 
 A simple lightweight windows application to verify the integrity of your backup files.
 
